@@ -2,6 +2,7 @@
 
 // Импорт модулей обработки
 importScripts(
+  '../core/header-normalizer.js',
   '../core/processor.js',
   '../core/fraud-analyzer.js',
   '../core/fg-summary.js'
@@ -9,9 +10,18 @@ importScripts(
 
 // Обработчик сообщений от главного потока
 self.onmessage = function(e) {
-  const { mainData, prepayData, config } = e.data;
+  let { mainData, prepayData, config } = e.data;
   
   try {
+    // НОРМАЛИЗАЦИЯ: преобразуем заголовки к единому формату
+    console.log('[Worker] Нормализация основного файла...');
+    mainData = normalizeFile(mainData, 'calculation');
+    
+    if (prepayData) {
+      console.log('[Worker] Нормализация prepayments...');
+      prepayData = normalizeFile(prepayData, 'prepayments');
+    }
+    
     if (!mainData || mainData.length === 0) {
       throw new Error('Основной файл пуст');
     }

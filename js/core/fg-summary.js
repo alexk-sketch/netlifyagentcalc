@@ -1,5 +1,11 @@
 'use strict';
 
+/**
+ * ВАЖНО: Этот модуль работает с НОРМАЛИЗОВАННЫМИ данными.
+ * Все заголовки уже преобразованы к русскому формату.
+ * ФГ: и Итого также уже преобразованы.
+ */
+
 function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
   console.log('[FG Summary] Создание сводки');
   console.log('[FG Summary] Маппинг получен:', Object.keys(cashierToAgent).length, 'записей');
@@ -39,6 +45,7 @@ function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
     let fgName = '';
     let cashierInfo = '';
     
+    // ФГ: уже нормализовано из FG:
     if (col0.startsWith('ФГ:')) {
       fgName = col0.substring(3).trim();
       cashierInfo = col1;
@@ -80,6 +87,7 @@ function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
     
     const parseNum = (val) => parseFloat(String(val).replace(/[\s,]/g, '')) || 0;
     
+    // Используем нормализованные заголовки
     group.totalDeposits += parseNum(
       fgRow['Сумма пополнений (в валюте админа по курсу текущего дня)'] ||
       fgRow['Сумма пополнений (в валюте админа)'] || 0
@@ -114,6 +122,7 @@ function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
     
     if (cleanPrepayData.length > 0) {
       const prepayRow = cleanPrepayData.find(p => {
+        // Используем нормализованные заголовки
         const prepayFG = String(p['Фин. группа'] || p['Финансовая группа'] || '').trim();
         return prepayFG.toLowerCase() === group.fgName.toLowerCase() ||
                prepayFG.toLowerCase().includes(group.fgName.toLowerCase()) ||

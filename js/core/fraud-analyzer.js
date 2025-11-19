@@ -1,5 +1,10 @@
 'use strict';
 
+/**
+ * ВАЖНО: Этот модуль работает с НОРМАЛИЗОВАННЫМИ данными.
+ * Все заголовки уже преобразованы к русскому формату.
+ */
+
 function analyzeFraud(data, cashierColumn, fraudConfig = {}, cashierToAgent = {}) {
   console.log('[Fraud Analyzer] Анализ', data.length, 'строк');
   console.log('[Fraud Analyzer] Config:', fraudConfig);
@@ -20,11 +25,9 @@ function analyzeFraud(data, cashierColumn, fraudConfig = {}, cashierToAgent = {}
     MULTI_ACCOUNT_HIGH_LOSS: fraudConfig.MULTI_ACCOUNT_HIGH_LOSS || 500,
     MULTI_ACCOUNT_HIGH_COUNT: fraudConfig.MULTI_ACCOUNT_HIGH_COUNT || 10,
     NAME_SIMILARITY_MULTI: fraudConfig.NAME_SIMILARITY_MULTI || 0.8,
-    // НОВЫЕ параметры для HIGH_BALANCED_FLOW
     HIGH_BALANCED_FLOW_DETECTION_THRESHOLD: fraudConfig.HIGH_BALANCED_FLOW_DETECTION_THRESHOLD || 1000,
     HIGH_BALANCED_FLOW_HIGH_THRESHOLD: fraudConfig.HIGH_BALANCED_FLOW_HIGH_THRESHOLD || 5000,
     HIGH_BALANCED_FLOW_LOWER_RATIO: fraudConfig.HIGH_BALANCED_FLOW_LOWER_RATIO || 0.90,
-    // НОВЫЙ параметр для AGENT_TAKEOVER
     AGENT_TAKEOVER_MIN_DEPOSITS: fraudConfig.AGENT_TAKEOVER_MIN_DEPOSITS || 1000,
     AGENT_TAKEOVER_MAX_PLAYERS: fraudConfig.AGENT_TAKEOVER_MAX_PLAYERS || 10,
     AGENT_TAKEOVER_CONCENTRATION: fraudConfig.AGENT_TAKEOVER_CONCENTRATION || 0.80,
@@ -96,7 +99,6 @@ function analyzeFraud(data, cashierColumn, fraudConfig = {}, cashierToAgent = {}
     
     const ratio = player.withdrawals / player.deposits;
     
-    // Проверяем диапазон: от 90% до верхнего порога HIGH_WITHDRAWALS
     if (ratio >= CONFIG.HIGH_BALANCED_FLOW_LOWER_RATIO && ratio < CONFIG.MEDIUM_RATIO) {
       let severity = 'MEDIUM';
       if (player.deposits >= CONFIG.HIGH_BALANCED_FLOW_HIGH_THRESHOLD) {
@@ -105,7 +107,7 @@ function analyzeFraud(data, cashierColumn, fraudConfig = {}, cashierToAgent = {}
       
       const ratioPercent = Math.round(ratio * 100);
       const totalFlow = player.deposits + player.withdrawals;
-      const estimatedCommission = Math.round(totalFlow * 0.05); // 5% комиссии
+      const estimatedCommission = Math.round(totalFlow * 0.05);
       
       const details = `Выводы ко вводам: ${ratioPercent}%. Депозит: $${Math.round(player.deposits)}, Вывод: $${Math.round(player.withdrawals)}. Оборот через кассу: $${Math.round(totalFlow)}. Комиссия агенту: ~$${estimatedCommission}. Возможная накрутка оборота.`;
       
@@ -217,15 +219,12 @@ function analyzeFraud(data, cashierColumn, fraudConfig = {}, cashierToAgent = {}
   
   // НОВЫЙ КРИТЕРИЙ: AGENT_TAKEOVER
   Object.values(cashiers).forEach(cashier => {
-    // Условия: касса убыточная, мало игроков, большие депозиты
     if (cashier.profit >= 0) return;
     if (cashier.players.length > CONFIG.AGENT_TAKEOVER_MAX_PLAYERS) return;
     if (cashier.totalDeposits < CONFIG.AGENT_TAKEOVER_MIN_DEPOSITS) return;
     
-    // Сортируем игроков по выводам (от большего к меньшему)
     const sortedPlayers = [...cashier.players].sort((a, b) => b.withdrawals - a.withdrawals);
     
-    // Проверяем группы из 1-3 игроков
     for (let groupSize = 1; groupSize <= Math.min(CONFIG.AGENT_TAKEOVER_MAX_GROUP_SIZE, sortedPlayers.length); groupSize++) {
       const group = sortedPlayers.slice(0, groupSize);
       const groupWithdrawals = group.reduce((sum, p) => sum + p.withdrawals, 0);
@@ -254,7 +253,7 @@ function analyzeFraud(data, cashierColumn, fraudConfig = {}, cashierToAgent = {}
           agentName: cashier.agentName
         });
         
-        break; // Один случай на кассу достаточно
+        break;
       }
     }
   });
@@ -263,6 +262,9 @@ function analyzeFraud(data, cashierColumn, fraudConfig = {}, cashierToAgent = {}
   return fraudCases;
 }
 
+/**
+ * ВАЖНО: Использует нормализованные русские заголовки
+ */
 function preparePlayersData(data, headers, cashierKey) {
   const players = [];
   

@@ -1,5 +1,11 @@
 'use strict';
 
+/**
+ * ВАЖНО: Этот модуль работает с НОРМАЛИЗОВАННЫМИ данными.
+ * Все заголовки уже преобразованы к русскому формату в header-normalizer.js
+ * ФГ: и Итого также уже преобразованы из FG: и Overall/Total
+ */
+
 function processData(data, config) {
   const { depCommission, withCommission, cashierColumn, findSimilarNames } = config;
   
@@ -21,6 +27,7 @@ function processData(data, config) {
       return parseFloat(str) || 0;
     };
     
+    // Используем нормализованные заголовки (всегда русские)
     const depSumUsd = parseNum(
       row['Сумма пополнений (в валюте админа по курсу текущего дня)'] ||
       row['Сумма пополнений (в валюте админа)'] ||
@@ -174,6 +181,10 @@ function levenshteinDistance(str1, str2) {
   return matrix[str1.length][str2.length];
 }
 
+/**
+ * Строит маппинг касса → агент
+ * ВАЖНО: Работает с нормализованными данными (ФГ: уже преобразовано)
+ */
 function buildCashierToAgentMapping(data, headers, cashierKey) {
   const mapping = {};
   
@@ -184,6 +195,7 @@ function buildCashierToAgentMapping(data, headers, cashierKey) {
     let agentName = null;
     let cashierInfo = null;
     
+    // Проверяем ФГ: (уже нормализовано из FG:)
     if (col0.startsWith('ФГ:')) {
       agentName = col0.substring(3).trim();
       cashierInfo = col1;
@@ -217,6 +229,10 @@ function extractCashierId(cashierStr) {
   return match ? match[1] : cashierStr;
 }
 
+/**
+ * Группирует данные по кассам
+ * ВАЖНО: Работает с нормализованными данными (Итого уже преобразовано)
+ */
 function groupData(data, cashierColumn) {
   const headers = Object.keys(data[0]);
   const cashierKey = headers[cashierColumn];
@@ -233,10 +249,12 @@ function groupData(data, cashierColumn) {
     const col0 = String(row[headers[0]] || '').trim();
     const col1 = String(row[headers[1]] || '').trim();
     
+    // ФГ: уже нормализовано из FG:
     if (col0.startsWith('ФГ:') || col1.startsWith('ФГ:')) {
       fgRows.push({ ...row, _isFG: true });
     }
-    else if (col1 === 'Итого' || col1 === 'Overall' || col0 === 'Итого' || col0 === 'Overall') {
+    // Итого уже нормализовано из Overall/Total
+    else if (col1 === 'Итого' || col0 === 'Итого') {
       overallRow = { ...row, _isOverall: true };
     }
     else {
