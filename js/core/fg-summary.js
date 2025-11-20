@@ -28,36 +28,34 @@ function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
     console.log('[FG Summary] Prepay строк после фильтрации:', cleanPrepayData.length);
   }
   
-  // НОВАЯ ЛОГИКА: Сначала собираем агентов из маппинга
-  const agentToCashiers = {};
+  // ШАГ 1: Извлекаем имена ФГ из строк ФГ в данных
+  const fgRows = groupedData.filter(row => row._isFG);
   
-  // Инвертируем маппинг: агент → [кассы]
-  Object.entries(cashierToAgent).forEach(([cashier, agent]) => {
-    if (!agentToCashiers[agent]) {
-      agentToCashiers[agent] = new Set();
-    }
-    agentToCashiers[agent].add(cashier);
-  });
+  if (fgRows.length === 0) {
+    console.warn('[FG Summary] Строки ФГ не найдены');
+    return null;
+  }
   
-  console.log('[FG Summary] Найдено агентов:', Object.keys(agentToCashiers).length);
-  
-  // Группируем данные игроков по агентам через кассы
   const fgGroups = {};
   
-  groupedData.forEach(row => {
-    if (row._isFG || row._isOverall || row._separator) return;
+  // Собираем имена ФГ из строк ФГ
+  fgRows.forEach(fgRow => {
+    const col0 = String(fgRow[headers[0]] || '');
+    const col1 = String(fgRow[headers[1]] || '');
     
-    const cashierName = String(row[cashierKey] || '').trim();
-    if (!cashierName) return;
+    let fgName = '';
     
-    const cashierId = extractCashierId(cashierName);
-    const agentName = cashierToAgent[cashierId] || cashierToAgent[cashierName];
+    if (col0.startsWith('ФГ:')) {
+      fgName = col0.substring(3).trim();
+    } else if (col1.startsWith('ФГ:')) {
+      fgName = col1.substring(3).trim();
+    }
     
-    if (!agentName) return;
+    if (!fgName) return;
     
-    if (!fgGroups[agentName]) {
-      fgGroups[agentName] = {
-        fgName: agentName,
+    if (!fgGroups[fgName]) {
+      fgGroups[fgName] = {
+        fgName: fgName,
         cashiers: [],
         cashierIds: new Set(),
         uniqueCashierNames: new Set(),
@@ -71,10 +69,36 @@ function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
         withdrawals: []
       };
     }
+  });
+  
+  console.log('[FG Summary] Найдено ФГ из строк:', Object.keys(fgGroups).length);
+  
+  // ШАГ 2: Агрегируем данные игроков, используя маппинг cashierToAgent
+  groupedData.forEach(row => {
+    if (row._isFG || row._isOverall || row._separator) return;
+    
+    const cashierName = String(row[cashierKey] || '').trim();
+    if (!cashierName) return;
+    
+    const cashierId = extractCashierId(cashierName);
+    
+    // Ищем агента через маппинг
+    const agentName = cashierToAgent[cashierId] || cashierToAgent[cashierName];
+    
+    if (!agentName) {
+      console.warn('[FG Summary] Агент не найден для кассы:', cashierName);
+      return;
+    }
+    
+    // Проверяем, есть ли эта ФГ в нашем списке
+    if (!fgGroups[agentName]) {
+      console.warn('[FG Summary] ФГ не найдена в списке:', agentName);
+      return;
+    }
     
     const group = fgGroups[agentName];
     
-    // Добавляем только уникальные ID
+    // Добавляем кассу
     if (!group.cashierIds.has(cashierId)) {
       group.cashierIds.add(cashierId);
       group.uniqueCashierNames.add(cashierName);
@@ -83,7 +107,7 @@ function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
     
     const parseNum = (val) => parseFloat(String(val).replace(/[\s,]/g, '')) || 0;
     
-    // Используем нормализованные заголовки
+    // Агрегируем суммы
     const deposits = parseNum(
       row['Сумма пополнений (в валюте админа по курсу текущего дня)'] ||
       row['Сумма пополнений (в валюте админа)'] || 0

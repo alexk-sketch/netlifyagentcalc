@@ -221,6 +221,9 @@ function buildCashierToAgentMapping(data, headers, cashierKey) {
     }
   });
   
+  console.log('[Processor] Маппинг построен. Примеры:', Object.entries(mapping).slice(0, 3));
+  console.log('[Processor] Всего ключей:', Object.keys(mapping).length);
+  
   return mapping;
 }
 
