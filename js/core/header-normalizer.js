@@ -27,11 +27,11 @@ const HEADER_MAPPINGS = {
     
     // Депозиты в валюте админа (основная колонка)
     'Сумма пополнений (в валюте админа по курсу текущего дня)': 'Сумма пополнений (в валюте админа по курсу текущего дня)',
-    'Deposit amount (in the administrator\'s currency at today\'s exchange rate)': 'Сумма пополнений (в валюте админа по курсу текущего дня)',
+    "Deposit amount (in the administrator's currency at today's exchange rate)": 'Сумма пополнений (в валюте админа по курсу текущего дня)',
     
     // Выводы в валюте админа (основная колонка)
     'Сумма вывода (в валюте админа по курсу текущего дня)': 'Сумма вывода (в валюте админа по курсу текущего дня)',
-    'Withdrawal amount (in the administrator\'s currency at today\'s exchange rate)': 'Сумма вывода (в валюте админа по курсу текущего дня)',
+    "Withdrawal amount (in the administrator's currency at today's exchange rate)": 'Сумма вывода (в валюте админа по курсу текущего дня)',
     
     // Альтернативные варианты без "по курсу текущего дня"
     'Сумма пополнений (в валюте админа)': 'Сумма пополнений (в валюте админа по курсу текущего дня)',
@@ -57,11 +57,11 @@ const HEADER_MAPPINGS = {
     'Payment Fraud': 'Махинации с платежами',
     
     'Махинации с платежами (в валюте админа по курсу текущего дня)': 'Махинации с платежами (в валюте админа по курсу текущего дня)',
-    'Payment Fraud (in the administrator\'s currency at today\'s exchange rate)': 'Махинации с платежами (в валюте админа по курсу текущего дня)',
+    "Payment Fraud (in the administrator's currency at today's exchange rate)": 'Махинации с платежами (в валюте админа по курсу текущего дня)',
     
     // Комиссия агента (в валюте админа)
     'Комиссия агента(в валюте админа по курсу текущего дня)': 'Комиссия агента(в валюте админа по курсу текущего дня)',
-    'Agent fee (in the administrator\'s currency at today\'s exchange rate)': 'Комиссия агента(в валюте админа по курсу текущего дня)'
+    "Agent fee (in the administrator's currency at today's exchange rate)": 'Комиссия агента(в валюте админа по курсу текущего дня)'
   },
   
   // Prepayments файл
@@ -81,7 +81,7 @@ const HEADER_MAPPINGS = {
     
     // Сумма
     'Сумма пополнений (в валюте админа)': 'Сумма пополнений (в валюте админа)',
-    'Total deposits (in the administrator\'s currency)': 'Сумма пополнений (в валюте админа)',
+    "Total deposits (in the administrator's currency)": 'Сумма пополнений (в валюте админа)',
     'Сумма пополнений': 'Сумма пополнений (в валюте админа)',
     
     // Количество
@@ -214,14 +214,43 @@ function normalizeDataMarkers(data, language) {
  * Универсальная функция нормализации файла
  */
 function normalizeFile(data, fileType = 'calculation') {
+  console.log('[Normalizer] =================================');
+  console.log('[Normalizer] Начало нормализации, тип:', fileType);
+  console.log('[Normalizer] Исходные заголовки:', Object.keys(data[0]));
+  console.log('[Normalizer] Первая строка col0:', data[0][Object.keys(data[0])[0]]);
+  console.log('[Normalizer] Первая строка col1:', data[0][Object.keys(data[0])[1]]);
+  
   const { normalized, language } = normalizeHeaders(data, fileType);
+  
+  console.log('[Normalizer] После normalizeHeaders:');
+  console.log('[Normalizer] Язык определен:', language);
+  console.log('[Normalizer] Новые заголовки:', Object.keys(normalized[0]));
+  console.log('[Normalizer] Первая строка col0:', normalized[0][Object.keys(normalized[0])[0]]);
+  console.log('[Normalizer] Первая строка col1:', normalized[0][Object.keys(normalized[0])[1]]);
+  
   const fullyNormalized = normalizeDataMarkers(normalized, language);
+  
+  console.log('[Normalizer] После normalizeDataMarkers:');
+  console.log('[Normalizer] Первая строка col0:', fullyNormalized[0][Object.keys(fullyNormalized[0])[0]]);
+  console.log('[Normalizer] Первая строка col1:', fullyNormalized[0][Object.keys(fullyNormalized[0])[1]]);
+  
+  // Проверяем строки ФГ
+  const fgRows = fullyNormalized.filter(r => {
+    const col0 = String(r[Object.keys(r)[0]] || '');
+    const col1 = String(r[Object.keys(r)[1]] || '');
+    return col0.startsWith('ФГ:') || col1.startsWith('ФГ:');
+  });
+  console.log('[Normalizer] Найдено строк ФГ:', fgRows.length);
+  if (fgRows.length > 0) {
+    console.log('[Normalizer] Пример ФГ:', fgRows[0][Object.keys(fgRows[0])[0]], fgRows[0][Object.keys(fgRows[0])[1]]);
+  }
   
   console.log('[Normalizer] File normalized:', {
     type: fileType,
     language,
     rows: fullyNormalized.length
   });
+  console.log('[Normalizer] =================================');
   
   return fullyNormalized;
 }

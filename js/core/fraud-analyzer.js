@@ -6,10 +6,6 @@
  */
 
 function analyzeFraud(data, cashierColumn, fraudConfig = {}, cashierToAgent = {}) {
-  console.log('[Fraud Analyzer] Анализ', data.length, 'строк');
-  console.log('[Fraud Analyzer] Config:', fraudConfig);
-  console.log('[Fraud Analyzer] Маппинг получен:', Object.keys(cashierToAgent).length, 'записей');
-  
   const CONFIG = {
     MIN_WITHDRAWAL_DIFF: fraudConfig.MIN_WITHDRAWAL_DIFF || 100,
     MEDIUM_RATIO: fraudConfig.MEDIUM_RATIO || 1.1,
@@ -39,8 +35,6 @@ function analyzeFraud(data, cashierColumn, fraudConfig = {}, cashierToAgent = {}
   const fraudCases = [];
   const headers = Object.keys(data[0]);
   const cashierKey = headers[cashierColumn];
-  
-  console.log('[Fraud] Примеры маппинга:', Object.entries(cashierToAgent).slice(0, 5));
   
   const players = preparePlayersData(data, headers, cashierKey);
   
@@ -258,7 +252,6 @@ function analyzeFraud(data, cashierColumn, fraudConfig = {}, cashierToAgent = {}
     }
   });
   
-  console.log('[Fraud Analyzer] Найдено случаев:', fraudCases.length);
   return fraudCases;
 }
 

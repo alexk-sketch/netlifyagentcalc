@@ -7,9 +7,6 @@
  */
 
 function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
-  console.log('[FG Summary] Создание сводки');
-  console.log('[FG Summary] Маппинг получен:', Object.keys(cashierToAgent).length, 'записей');
-  
   if (!groupedData || groupedData.length === 0) {
     return null;
   }
@@ -25,14 +22,12 @@ function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
       const col1 = String(row[Object.keys(row)[1]] || '').trim();
       return col1 !== 'Итого' && col1 !== 'Overall' && col0 !== 'Итого' && col0 !== 'Overall';
     });
-    console.log('[FG Summary] Prepay строк после фильтрации:', cleanPrepayData.length);
   }
   
   // ШАГ 1: Извлекаем имена ФГ из строк ФГ в данных
   const fgRows = groupedData.filter(row => row._isFG);
   
   if (fgRows.length === 0) {
-    console.warn('[FG Summary] Строки ФГ не найдены');
     return null;
   }
   
@@ -71,8 +66,6 @@ function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
     }
   });
   
-  console.log('[FG Summary] Найдено ФГ из строк:', Object.keys(fgGroups).length);
-  
   // ШАГ 2: Агрегируем данные игроков, используя маппинг cashierToAgent
   groupedData.forEach(row => {
     if (row._isFG || row._isOverall || row._separator) return;
@@ -85,16 +78,10 @@ function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
     // Ищем агента через маппинг
     const agentName = cashierToAgent[cashierId] || cashierToAgent[cashierName];
     
-    if (!agentName) {
-      console.warn('[FG Summary] Агент не найден для кассы:', cashierName);
-      return;
-    }
+    if (!agentName) return;
     
     // Проверяем, есть ли эта ФГ в нашем списке
-    if (!fgGroups[agentName]) {
-      console.warn('[FG Summary] ФГ не найдена в списке:', agentName);
-      return;
-    }
+    if (!fgGroups[agentName]) return;
     
     const group = fgGroups[agentName];
     
@@ -157,10 +144,6 @@ function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
           String(prepayRow['Сумма пополнений (в валюте админа)'] || 
                  prepayRow['Сумма пополнений'] || 0).replace(/[\s,]/g, '')
         ) || 0;
-        
-        console.log('[FG Summary] Найден prepay для', group.fgName, '=', prepaidAmount);
-      } else {
-        console.log('[FG Summary] Prepay НЕ найден для', group.fgName);
       }
     }
     
@@ -198,7 +181,6 @@ function createFGSummary(groupedData, prepayData, cashierToAgent = {}) {
     });
   });
   
-  console.log('[FG Summary] Создано строк:', summary.length);
   return summary;
 }
 

@@ -12,9 +12,6 @@ function processData(data, config) {
   const headers = Object.keys(data[0]);
   const cashierKey = headers[cashierColumn];
   
-  console.log('[Processor] Обработка', data.length, 'строк');
-  console.log('[Processor] findSimilarNames:', findSimilarNames);
-  
   if (!cashierKey) {
     throw new Error(`Колонка с индексом ${cashierColumn} не существует. Всего колонок: ${headers.length}`);
   }
@@ -67,9 +64,7 @@ function processData(data, config) {
   
   // ПУНКТ 5: Поиск похожих имен, если включено
   if (findSimilarNames) {
-    console.log('[Processor] Поиск похожих имен...');
     findSimilarNamesInData(processed, headers, cashierKey);
-    console.log('[Processor] Поиск похожих имен завершен');
   }
   
   return { processed, cashierToAgent };
@@ -220,9 +215,6 @@ function buildCashierToAgentMapping(data, headers, cashierKey) {
       mapping[normalized] = agentName;
     }
   });
-  
-  console.log('[Processor] Маппинг построен. Примеры:', Object.entries(mapping).slice(0, 3));
-  console.log('[Processor] Всего ключей:', Object.keys(mapping).length);
   
   return mapping;
 }
